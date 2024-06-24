@@ -29,7 +29,7 @@ The AWS Cloud Architecture after completing the execution of all CloudFormation 
 ![alt text](./IAC.drawio.png)
 
 # How to Execute CloudFormation Stacks
-> **_NOTE:_**  Must to run in order by number(01,02,…).
+> ## **_NOTE:_**  Templates are must to execute in order by number(01,02,…).
 
 ## Sample CloudFormaion Stack Execution with VPC CloudFormation Stack
 ### Steps

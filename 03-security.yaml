@@ -1,0 +1,78 @@
+Parameters:
+  ProjectName:
+    Description: The name of the project.
+    Type: String
+  Environment:
+    Description: Deployment environment
+    Type: String
+  ContainerPort:
+    Description: Container Port for ECS service
+    Type: Number
+
+Resources:
+  EcsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      Tags:
+      - Key: env
+        Value: !Sub "${Environment}-sg"
+      - Key: Name
+        Value: !Sub "${ProjectName}-${Environment}-sg"
+      GroupDescription: Security Group for ECS Tasks
+      VpcId:
+        "Fn::ImportValue": !Sub "${ProjectName}-${Environment}-VPCID"
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: !Ref ContainerPort
+        ToPort: !Ref ContainerPort
+        CidrIp: '0.0.0.0/0'
+
+  EcsTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Tags: 
+      - Key: env
+        Value: !Sub "${Environment}-IAMExecutionRole"
+      - Key: Name
+        Value: !Sub "${ProjectName}-${Environment}-IAMExecutionRole"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: [ecs-tasks.amazonaws.com]
+          Action: ['sts:AssumeRole']
+      Policies:
+      - PolicyName: AmazonECSTaskExecutionRolePolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - 'ecr:GetAuthorizationToken'
+            - 'ecr:BatchCheckLayerAvailability'
+            - 'ecr:GetDownloadUrlForLayer'
+            - 'ecr:GetRepositoryPolicy'
+            - 'ecr:DescribeRepositories'
+            - 'ecr:ListImages'
+            - 'ecr:DescribeImages'
+            - 'ecr:BatchGetImage'
+            - 'logs:CreateLogStream'
+            - 'logs:PutLogEvents'
+            Resource: '*'
+
+Outputs:
+  EcsTaskExecutionRole:
+    Description: "IAM role for ECS"
+    Value: !Ref EcsTaskExecutionRole
+    Export:
+      Name: !Sub "${ProjectName}-${Environment}-IAMExecutionRole"
+
+  EcsSecurityGroup:
+    Description: "ECS Security Group"
+    Value: !Ref EcsSecurityGroup
+    Export:
+      Name: !Sub "${ProjectName}-${Environment}-sg"
+  
+
+

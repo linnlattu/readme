@@ -1,0 +1,133 @@
+Parameters:
+  ProjectName:
+    Description: The name of the project.
+    Type: String
+  Environment:
+    Description: Deployment environment
+    Type: String
+  CPU:
+    Description: Enter CPU size (MB)
+    Type: String
+    Default: '256'
+  Memory:
+    Description: Enter Memory size (MB)
+    Type: String
+    Default: '512'
+  ContainerPort:
+    Description: Container Port for ECS service
+    Type: Number
+  DesiredCount:
+    Description: Desired Count for ECS service
+    Type: Number
+  ECRName:
+    Description: ECR repository name
+    Type: String
+
+Resources:
+  LoadBalancer:
+    Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
+    Properties:
+      Name: !Sub "${ProjectName}-${Environment}-LB"
+      Subnets:
+        - "Fn::ImportValue": !Sub "${ProjectName}-${Environment}-PublicSubnet1ID"
+        - "Fn::ImportValue": !Sub "${ProjectName}-${Environment}-PublicSubnet2ID"
+        - "Fn::ImportValue": !Sub "${ProjectName}-${Environment}-PublicSubnet3ID"
+      SecurityGroups:
+        - "Fn::ImportValue": !Sub "${ProjectName}-${Environment}-sg"
+      Scheme: internet-facing
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: '60'
+        - Key: routing.http2.enabled
+          Value: 'true'
+  
+  LoadBalancerListener:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+
+  TargetGroup:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      Name: !Sub "${ProjectName}-${Environment}-TG"
+      Port: !Ref ContainerPort
+      Protocol: HTTP
+      VpcId:
+        "Fn::ImportValue": !Sub "${ProjectName}-${Environment}-VPCID"
+      TargetType: ip
+      HealthCheckProtocol: HTTP
+      HealthCheckPort: !Ref ContainerPort
+      HealthCheckPath: /
+      Matcher:
+        HttpCode: '200'
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 5
+      UnhealthyThresholdCount: 2
+
+  ECSTaskDefinition:
+    Type: 'AWS::ECS::TaskDefinition'
+    Properties:
+      Family: !Sub "${ProjectName}-${Environment}-Task"
+      Cpu: !Ref CPU
+      Memory: !Ref Memory
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      RuntimePlatform:
+        OperatingSystemFamily: LINUX
+        CpuArchitecture: X86_64
+      ExecutionRoleArn:
+        "Fn::ImportValue": !Sub "${ProjectName}-${Environment}-IAMExecutionRole"
+      TaskRoleArn:
+        "Fn::ImportValue": !Sub "${ProjectName}-${Environment}-IAMExecutionRole"
+      EphemeralStorage:
+        SizeInGiB: 21
+      ContainerDefinitions:
+        - Name: latest
+          Image: linnlattoo/my-website:latest
+          # Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRName}:latest'
+          Essential: true
+          PortMappings:
+            - ContainerPort: !Ref ContainerPort
+              Protocol: tcp
+              AppProtocol: http
+
+  ECSService:
+    Type: 'AWS::ECS::Service'
+    DependsOn: 
+      - LoadBalancerListener
+      - TargetGroup
+    Properties:
+      Cluster:
+        "Fn::ImportValue": !Sub "${ProjectName}-${Environment}-ECS-Cluster"
+      DesiredCount: !Ref DesiredCount
+      TaskDefinition: !Ref ECSTaskDefinition
+      LaunchType: FARGATE
+      PlatformVersion: 1.4.0
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets:
+            - "Fn::ImportValue": !Sub "${ProjectName}-${Environment}-PublicSubnet1ID"
+            - "Fn::ImportValue": !Sub "${ProjectName}-${Environment}-PublicSubnet2ID"
+            - "Fn::ImportValue": !Sub "${ProjectName}-${Environment}-PublicSubnet3ID"
+          SecurityGroups:
+            - "Fn::ImportValue": !Sub "${ProjectName}-${Environment}-sg"
+          AssignPublicIp: ENABLED
+      LoadBalancers:
+        - ContainerName: latest
+          ContainerPort: !Ref ContainerPort
+          TargetGroupArn: !Ref TargetGroup
+          
+Outputs:
+  ECSServiceName:
+    Description: "Name of the ECS Service"
+    Value: !Ref ECSService
+  LoadBalancerDNSName:
+    Description: "DNS Name of the Load Balancer"
+    Value: !GetAtt LoadBalancer.DNSName

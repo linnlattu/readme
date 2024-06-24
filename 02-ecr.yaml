@@ -1,0 +1,63 @@
+Parameters:
+  ProjectName:
+    Type: String
+    Description: The name of the project.
+
+  Environment:
+    Type: String
+    Description: Deployment environment.
+
+Resources:
+  ECRRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub "${ProjectName}-${Environment}-ecr"
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      Tags:
+      - Key: Environment
+        Value: !Ref Environment
+      - Key: Project
+        Value: !Ref ProjectName
+      LifecyclePolicy:
+        LifecyclePolicyText: !Sub |
+          {
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "Keep last 5 images",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 5
+                },
+                "action": {
+                  "type": "expire"
+                }
+              }
+            ]
+          }
+
+      RepositoryPolicyText:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: AllowPushPull
+          Effect: Allow
+          Principal:
+            AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+          Action:
+          - 'ecr:GetDownloadUrlForLayer'
+          - 'ecr:BatchGetImage'
+          - 'ecr:BatchCheckLayerAvailability'
+          - 'ecr:PutImage'
+          - 'ecr:InitiateLayerUpload'
+          - 'ecr:UploadLayerPart'
+          - 'ecr:CompleteLayerUpload'
+
+
+Outputs:
+  ECRRepositoryName:
+    Description: "NAT Gateway ID"
+    Value: !Ref ECRRepository
+    Export:
+      Name: !Sub "${ProjectName}-${Environment}-ECR"

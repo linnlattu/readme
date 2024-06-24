@@ -1,5 +1,73 @@
+# CloudFormation Templates for AWS Infrastructure
+# Table of Contents
+1. [Introduction](#introduction)
+2. [Getting Started](#getting-started)
+3. [Templates Included](#templates-included)
+4. [The Architecture](#the-architecture)
+5. [How to Execute CloudFormation Stacks](#how-to-execute-cloudformation-stacks)
+6. [About CloudFormation Templates](#about-cloudformation-templates)
+
+# Introduction
+This repository contains a collection of AWS CloudFormation templates designed to automate the provisioning of various AWS infrastructure components. These templates cover a range of services including VPC setup, ECS clusters, ECR repositories, load balancers, and more.
+
+# Getting Started
+1. Create new CloudFormation Stacks in order by number(01,02,…).
+2. Modify the parameters in the respective templates as per your requirements.
+3. Use the AWS CloudFormation console to deploy the templates.
+4. Use the AWS CloudFormation console to monitor the status of your stacks and manage updates or deletions.
+
+# Templates Included
+1. VPC and Subnet Setup
+2. ECR Repository
+3. ECS Security Group and Execution Role
+4. ECS Cluster
+5. ECS Service with Load Balancer
+
+# The Architecture
+The AWS Cloud Architecture after completing the execution of all CloudFormation stacks.
+
+![alt text](./IAC.drawio.png)
+
+# How to Execute CloudFormation Stacks
+> **_NOTE:_**  Must to run in order by number(01,02,…).
+
+## Sample CloudFormaion Stack Execution with VPC CloudFormation Stack
+### Steps
+1. Go to CloudFormation and Create stack.
+
+![alt text](./step1.png)
+
+2. Upload CloudFormation Yaml file.
+
+![alt text](./step2.png)
+
+3. Fill the parameters for VPC CIDR range and VPC subnets IPs and others in descriptions. And then click Next.
+
+![alt text](./step3.png)
+
+4. Click Submit.
+
+![alt text](./step4.png)
+
+Wait a minute while creating the Resources.
+
+![alt text](./step5.png)
+
+Creating VPC is done.
+
+![alt text](./step6.png)
+
+![alt text](./step7.png)
+
+Can check which resources is created by CloudFormation stack in Resources tab and Outputs to reuse for the next stacks in Outputs tab.
+
+![alt text](./step8.png)
+
+![alt text](./step9.png)
+
+# About CloudFormation Templates
 # 01 VPC CloudFormation Template
-# Parameters
+## Parameters
     - ProjectName: The name of the project.
     - Environment: Deployment environment (e.g., dev, prod).
     - Region: AWS region where the resources will be deployed. Defaults to ap-southeast-1.
@@ -10,7 +78,7 @@
     - PrivateSubnet1cidr: CIDR range for Private Subnet 1.
     - PrivateSubnet2cidr: CIDR range for Private Subnet 2.
     - PrivateSubnet3cidr: CIDR range for Private Subnet 3.
-# Resources & Properties
+## Resources & Properties
 1. Virtual Private Cloud
     - VPC: Creates a VPC with the specified CIDR block, DNS support, and DNS hostnames enabled.
     - InternetGateway: Creates an internet gateway and attaches it to the VPC.
@@ -20,7 +88,7 @@
     - PrivateRouteTable: Creates a route table for private subnets and adds a default route to the NAT gateway.
     - NATGateway: Creates a NAT gateway in the first public subnet with an elastic IP address.
     - SubnetRouteTableAssociations: Associates each subnet with the corresponding route table.
-# Outputs
+## Outputs
     - VpcId: The ID of the created VPC.
     - PublicSubnet1Id: The ID of Public Subnet 1.
     - PublicSubnet2Id: The ID of Public Subnet 2.
@@ -29,7 +97,7 @@
     - PrivateSubnet2Id: The ID of Private Subnet 2.
     - PrivateSubnet3Id: The ID of Private Subnet 3.
     - NATGatewayId: The ID of the NAT Gateway.
-# Usage
+## Usage
 1. Parameters
     - Ensure you have the appropriate values for the parameters before deploying the stack. This includes the CIDR blocks for the VPC and subnets.
 2. Deploy
@@ -38,10 +106,10 @@
     - After deployment, use the outputs to reference the created resources in your applications or other CloudFormation stacks.
 
 # 02 ECR CloudFormation Template
-# Parameters
+## Parameters
     - ProjectName: The name of the project.
     - Environment: Deployment environment (e.g., dev, prod).
-# Resources & Properties
+## Resources & Properties
 1. Elastic Container Registry
     - RepositoryName: The name of the repository. It is formed using the project name and environment.
     - ImageScanningConfiguration: Automatically scans images on push.
@@ -50,9 +118,9 @@
     - Project: The project name.
     - LifecyclePolicy: A lifecycle policy that keeps only the last 5 images.
     - RepositoryPolicyText: A repository policy that allows push and pull actions for the root user of the account.
-# Outputs
+## Outputs
     - ECRRepositoryName: The name of the created ECR repository.
-# Usage
+## Usage
 1. Parameters
     - Ensure you have the appropriate values for the parameters before deploying the stack. This includes the project name and environment.
 2. Deploy
@@ -61,11 +129,11 @@
     - After deployment, use the outputs to reference the created resources in your applications or other CloudFormation stacks.
 
 # 03 Security CloudFormation Template
-# Parameters
+## Parameters
     - ProjectName: The name of the project.
     - Environment: Deployment environment (e.g., dev, prod).
     - ContainerPort: Container port for the ECS service.
-# Resources & Properties
+## Resources & Properties
 1. EcsSecurityGroup
     - GroupDescription: Description of the security group.
     - VpcId: VPC ID imported from an existing stack.
@@ -73,10 +141,10 @@
 2. EcsTaskExecutionRole
     - AssumeRolePolicyDocument: Policy that allows ECS tasks to assume this role.
     - Policies: Policies that provide permissions to interact with ECR and CloudWatch Logs.
-# Outputs
+## Outputs
     - EcsTaskExecutionRole: The ARN of the created IAM role for ECS tasks.
     - EcsSecurityGroup: The ID of the created security group for ECS tasks.
-# Usage
+## Usage
 1. Parameters
     - Ensure you have the appropriate values for the parameters before deploying the stack. This includes the project name, environment, and container port.
 2. Deploy
@@ -85,18 +153,18 @@
     - After deployment, use the outputs to reference the created resources in your applications or other CloudFormation stacks.
 
 # 04 ECS Cluster CloudFormation Template
-# Parameters
+## Parameters
     - ProjectName: The name of the project.
     - Environment: Deployment environment (e.g., dev, prod).
-# Resources & Properties
+## Resources & Properties
 1. ECS Cluster
     - ClusterName: The name of the ECS cluster. It is formed using the project name and environment.
     - ClusterSettings: Enables container insights for enhanced monitoring.
     - Tags: Tags for the ECS cluster.
         - Environment: The deployment environment.
-# Outputs
+## Outputs
     - ClusterName: The name of the created ECS cluster.
-# Usage
+## Usage
 1. Parameters
     - Ensure you have the appropriate values for the parameters before deploying the stack. This includes the project name and environment.
 2. Deploy
@@ -105,7 +173,7 @@
     - After deployment, use the outputs to reference the created resources in your applications or other CloudFormation stacks.
 
 # 05 ECS Service CloudFormation Template
-# Parameters
+## Parameters
     - ProjectName: The name of the project.
     - Environment: Deployment environment (e.g., dev, prod).
     - CPU: CPU size (MB) for the ECS task. Default is 256 MB.
@@ -113,7 +181,7 @@
     - ContainerPort: Container port for the ECS service.
     - DesiredCount: Desired count for ECS service.
     - ECRName: ECR repository name.
-# Resources & Properties
+## Resources & Properties
 1. LoadBalancer
     - Name: The name of the load balancer.
     - Subnets: Public subnets for the load balancer.
@@ -149,10 +217,10 @@
     - LaunchType: Set to FARGATE.
     - NetworkConfiguration: Network settings including subnets, security groups, and public IP assignment.
     - LoadBalancers: Load balancer settings including container name, container port, and target group ARN.
-# Outputs
+## Outputs
     - ECSServiceName: The name of the created ECS service.
     - LoadBalancerDNSName: The DNS name of the created load balancer.
-# Usage
+## Usage
 1. Parameters
     - Ensure you have the appropriate values for the parameters before deploying the stack. This includes the project name, environment, CPU, memory, container port, desired count, and ECR repository name.
 2. Deploy

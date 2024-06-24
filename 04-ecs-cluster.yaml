@@ -1,0 +1,28 @@
+Parameters:
+  ProjectName:
+    Description: The name of the project.
+    Type: String
+  Environment:
+    Description: Deployment environment
+    Type: String
+
+Resources:
+  ECSCluster:
+    Type: 'AWS::ECS::Cluster'
+    Properties:
+      ClusterName: !Sub "${ProjectName}-${Environment}-ECS-Cluster"
+      ClusterSettings:
+      - Name: containerInsights
+        Value: 'enabled'
+      Tags:
+      - Key: Environment
+        Value: !Ref Environment
+
+Outputs:
+  ClusterName:
+    Description: "Name of the ECS Cluster"
+    Value: !Ref ECSCluster
+    Export:
+      Name: !Sub "${ProjectName}-${Environment}-ECS-Cluster"
+
+
